@@ -64,7 +64,6 @@ class Email extends React.Component {
 
     ActionActions.previewContent({
       actionId: action.id,
-      payload: { blockMap: action.content, html: action.html },
       onError: error =>
         this.setState({
           loading: { ...this.state.loading, preview: false },
@@ -111,7 +110,7 @@ class Email extends React.Component {
 
       this.setState({ loading: { ...loading, emailSettings: true } });
 
-      ActionActions.updateEmailSettings({
+      ActionActions.updateAction({
         actionId: action.id,
         payload,
         onError: () => {
@@ -499,7 +498,7 @@ class Email extends React.Component {
                 </Button>
 
                 <Button
-                  disabled={index === action.datalab.data.length - 1}
+                  disabled={index === action.filtered_data.length - 1}
                   onClick={() => this.setState({ index: index + 1 })}
                 >
                   Next
@@ -507,7 +506,7 @@ class Email extends React.Component {
                 </Button>
               </Button.Group>
               <span className="current_record">
-                Record {index + 1} of {action.datalab.data.length}
+                Record {index + 1} of {action.filtered_data.length}
               </span>
             </div>
           )}

@@ -98,7 +98,7 @@ export const fetchWorkflowEmailHistory = (workflowId) => dispatch => {
     initialFn: () => {
       dispatch(requestEmailHistory());
     },
-    url: `/workflow/${workflowId}/retrieve_history/`,
+    url: `/action/${workflowId}/retrieve_history/`,
     method: 'GET',
     errorFn: (error) => {
       dispatch(failureRequestEmailHistory(error));
@@ -176,7 +176,7 @@ export const searchContent = (linkId, zid) => dispatch => {
     initialFn: () => {
       dispatch(requestSearchContent(zid));
     },
-    url: `/workflow/search_content/`,
+    url: `/action/search_content/`,
     method: 'POST',
     errorFn: (error) => {
       dispatch(errorContent(error));
@@ -207,7 +207,7 @@ export const searchWorkflow = (linkId) => dispatch => {
     initialFn: () => {
       dispatch(requestSearchWorkflow());
     },
-    url: `/workflow/search_workflow/`,
+    url: `/action/search_workflow/`,
     method: 'POST',
     errorFn: (error) => {
       dispatch(errorWorkflow(error));
@@ -235,7 +235,7 @@ export const bindWorkflow = (linkId, workflowId) => dispatch => {
     initialFn: () => {
       dispatch(requestBindWorkflow());
     },
-    url: `/workflow/${workflowId}/`,
+    url: `/action/${workflowId}/`,
     method: 'PATCH',
     errorFn: (error) => {
       dispatch(errorWorkflow(error));

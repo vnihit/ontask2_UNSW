@@ -22,7 +22,7 @@ from rest_framework.authtoken import views
 from container.views import ContainerViewSet
 from datasource.views import DatasourceViewSet
 from datalab.views import DatalabViewSet
-from workflow.views import WorkflowViewSet
+from action.views import ActionViewSet
 from audit.views import AuditViewSet
 
 import accounts.urls
@@ -34,7 +34,7 @@ router = routers.DefaultRouter()
 router.register(r'container', ContainerViewSet, r"container")
 router.register(r'datasource', DatasourceViewSet, r"datasource")
 router.register(r'datalab', DatalabViewSet, r"datalab")
-router.register(r'workflow', WorkflowViewSet, r"workflow")
+router.register(r'action', ActionViewSet, r"action")
 router.register(r'audit', AuditViewSet, r"audit")
 
 urlpatterns = [

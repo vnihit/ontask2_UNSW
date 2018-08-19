@@ -14,7 +14,7 @@ import {
   Icon
 } from "antd";
 
-import * as ActionActionCreators from "../ActionActions";
+import * as ActionActions from "../ActionActions";
 
 import panelLayout from "../../shared/panelLayout";
 import FormItemLayout from "../../shared/FormItemLayout";
@@ -30,7 +30,7 @@ class ConditionGroupModal extends React.Component {
     const { dispatch } = props;
 
     this.boundActionCreators = bindActionCreators(
-      ActionActionCreators,
+      ActionActions,
       dispatch
     );
 
@@ -38,34 +38,37 @@ class ConditionGroupModal extends React.Component {
   }
 
   handleOk = () => {
-    const { form, action, conditionGroup, updateAction } = this.props;
-    form.validateFields((err, payload) => {
+    const { form, action, conditionGroupIndex, updateAction } = this.props;
+    form.validateFields((err, conditionGroup) => {
       if (err) return;
 
       this.setState({ loading: true });
 
-      if (conditionGroup) {
-        this.boundActionCreators.updateConditionGroup({
-          actionId: action.id,
-          conditionGroup,
-          payload,
-          onError: error => this.setState({ loading: false, error }),
-          onSuccess: action => {
-            updateAction(action);
-            this.handleClose();
-          }
-        });
-      } else {
-        this.boundActionCreators.createConditionGroup({
-          actionId: action.id,
-          payload,
-          onError: error => this.setState({ loading: false, error }),
-          onSuccess: action => {
-            updateAction(action);
-            this.handleClose();
-          }
-        });
-      }
+      conditionGroup.conditions.forEach(condition => {
+        condition.formulas = condition.formulas.map(formula => ({
+          field: formula.fieldOperator[0],
+          operator: formula.fieldOperator[1],
+          comparator: formula.comparator
+        }));
+      });
+
+      if (conditionGroupIndex !== undefined)
+        action.condition_groups[conditionGroupIndex] = conditionGroup;
+
+      ActionActions.updateAction({
+        actionId: action.id,
+        payload: {
+          condition_groups:
+            conditionGroupIndex !== undefined
+              ? action.condition_groups
+              : [...action.condition_groups, conditionGroup]
+        },
+        onError: error => this.setState({ loading: false, error }),
+        onSuccess: action => {
+          updateAction(action);
+          this.handleClose();
+        }
+      });
     });
   };
 
@@ -77,7 +80,13 @@ class ConditionGroupModal extends React.Component {
   };
 
   render() {
-    const { form, formState, action, conditionGroup, visible } = this.props;
+    const {
+      form,
+      formState,
+      action,
+      conditionGroupIndex,
+      visible
+    } = this.props;
 
     const { loading, error } = this.state;
 
@@ -133,9 +142,11 @@ class ConditionGroupModal extends React.Component {
       <Modal
         visible={visible}
         title={
-          conditionGroup ? "Edit condition group" : "Create condition group"
+          conditionGroupIndex !== undefined
+            ? "Edit condition group"
+            : "Create condition group"
         }
-        okText={conditionGroup ? "Update" : "Create"}
+        okText={conditionGroupIndex !== undefined ? "Update" : "Create"}
         onCancel={this.handleClose}
         onOk={this.handleOk}
         confirmLoading={loading}
@@ -189,7 +200,8 @@ const QueryBuilder = ({
         }}
         style={{ textAlign: "right", marginBottom: "5px" }}
       >
-        <Icon type="plus" />Add Condition
+        <Icon type="plus" />
+        Add Condition
       </Button>
 
       <Row style={{ ...panelLayout }}>
@@ -375,11 +387,11 @@ const Field = ({
 };
 
 const mapStateToProps = state => {
-  const { formState, conditionGroup } = state.action;
+  const { formState, conditionGroupIndex } = state.action;
 
   return {
     formState,
-    conditionGroup
+    conditionGroupIndex
   };
 };
 
@@ -387,7 +399,7 @@ export default connect(mapStateToProps)(
   Form.create({
     onFieldsChange(props, payload) {
       const { dispatch } = props;
-      dispatch(ActionActionCreators.updateFormState(payload));
+      dispatch(ActionActions.updateFormState(payload));
     },
     mapPropsToFields(props) {
       const { formState } = props;

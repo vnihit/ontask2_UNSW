@@ -106,3 +106,14 @@ class Datalab(Document):
     data = ListField(DictField())
     order = EmbeddedDocumentListField(Column)
     charts = EmbeddedDocumentListField(Chart)
+
+    @property
+    def fields(self):
+        fields = []
+        for step in self.steps:
+            if step.type == "datasource":
+                step = step.datasource
+                for field in step.fields:
+                    label = step.labels[field]
+                    fields.append(label)
+        return fields

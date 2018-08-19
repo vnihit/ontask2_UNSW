@@ -13,7 +13,7 @@ import {
   Cascader
 } from "antd";
 
-import * as ActionActionCreators from "../ActionActions";
+import * as ActionActions from "../ActionActions";
 
 import panelLayout from "../../shared/panelLayout";
 import "./QueryBuilder.css";
@@ -29,7 +29,7 @@ class FilterModal extends React.Component {
     this.state = { loading: false, error: null };
 
     this.boundActionCreators = bindActionCreators(
-      ActionActionCreators,
+      ActionActions,
       dispatch
     );
   }
@@ -37,12 +37,21 @@ class FilterModal extends React.Component {
   handleOk = () => {
     const { form, action, updateAction, closeModal } = this.props;
 
-    form.validateFields((err, payload) => {
+    form.validateFields((err, filter) => {
       if (err) return;
+
+      if ("formulas" in filter) {
+        filter.formulas = filter.formulas.map(formula => ({
+          field: formula.fieldOperator[0],
+          operator: formula.fieldOperator[1],
+          comparator: formula.comparator
+        }));
+      }
+
       this.setState({ loading: true });
-      this.boundActionCreators.updateFilter({
+      ActionActions.updateAction({
         actionId: action.id,
-        payload,
+        payload: { filter },
         onError: error => this.setState({ loading: false, error }),
         onSuccess: action => {
           updateAction(action);
@@ -251,7 +260,7 @@ export default connect(mapStateToProps)(
   Form.create({
     onFieldsChange(props, payload) {
       const { dispatch } = props;
-      dispatch(ActionActionCreators.updateFormState(payload));
+      dispatch(ActionActions.updateFormState(payload));
     },
     mapPropsToFields(props) {
       const { formState } = props;

@@ -7,7 +7,7 @@ from rest_framework_mongoengine.serializers import (
 from .models import Container
 from datasource.models import Datasource
 from datalab.models import Datalab
-from workflow.models import Workflow
+from action.models import Action
 
 
 class EmbeddedDatasourceSerializer(EmbeddedDocumentSerializer):
@@ -22,11 +22,11 @@ class EmbeddedDatalabSerializer(EmbeddedDocumentSerializer):
         fields = ["id", "name", "steps"]
 
 
-class EmbeddedWorkflowSerializer(EmbeddedDocumentSerializer):
+class EmbeddedActionSerializer(EmbeddedDocumentSerializer):
     datalab = serializers.CharField()
 
     class Meta:
-        model = Workflow
+        model = Action
         fields = ["id", "name", "description", "datalab"]
 
 
@@ -35,7 +35,7 @@ class ContainerSerializer(DocumentSerializer):
         many=True, allow_null=True, read_only=True
     )
     datalabs = EmbeddedDatalabSerializer(many=True, allow_null=True, read_only=True)
-    workflows = EmbeddedWorkflowSerializer(many=True, allow_null=True, read_only=True)
+    actions = EmbeddedActionSerializer(many=True, allow_null=True, read_only=True)
 
     class Meta:
         model = Container

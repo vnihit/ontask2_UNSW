@@ -2,7 +2,7 @@ from rest_framework import permissions
 
 from container.models import Container
 
-class WorkflowPermissions(permissions.BasePermission):
+class ActionPermissions(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         request_user = request.user.email
 

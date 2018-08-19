@@ -13,7 +13,6 @@ from .utils import bind_column_types, combine_data, update_form_data, retrieve_f
 
 from container.views import ContainerViewSet
 from datasource.models import Datasource
-from workflow.models import Workflow
 from audit.serializers import AuditSerializer
 
 

@@ -161,10 +161,10 @@ class ContainerViewSet(viewsets.ModelViewSet):
             },
             {
                 "$lookup": {
-                    "from": "workflow",
+                    "from": "action",
                     "localField": "_id",
                     "foreignField": "container",
-                    "as": "workflows",
+                    "as": "actions",
                 }
             },
             {
@@ -199,14 +199,14 @@ class ContainerViewSet(viewsets.ModelViewSet):
                 datalab["id"] = datalab.pop("_id")
 
             datalabs = {}
-            for workflow in container["workflows"]:
-                workflow["id"] = workflow.pop("_id")
-                if not workflow["datalab"] in datalabs:
-                    datalabs[workflow["datalab"]] = Datalab.objects.get(
-                        id=workflow["datalab"]
+            for action in container["actions"]:
+                action["id"] = action.pop("_id")
+                if not action["datalab"] in datalabs:
+                    datalabs[action["datalab"]] = Datalab.objects.get(
+                        id=action["datalab"]
                     )
 
-                workflow["datalab"] = datalabs[workflow["datalab"]]['name']
+                action["datalab"] = datalabs[action["datalab"]]['name']
 
             serialized_containers.append(ContainerSerializer(container).data)
 

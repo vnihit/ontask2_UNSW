@@ -26,7 +26,7 @@ import { isKeyHotkey } from "is-hotkey";
 import _ from "lodash";
 import Draggable from "react-draggable";
 
-import * as ActionActionCreators from "../ActionActions";
+import * as ActionActions from "../ActionActions";
 
 import FilterModal from "../modals/FilterModal";
 import ConditionGroupModal from "../modals/ConditionGroupModal";
@@ -63,24 +63,26 @@ const MARK_TAGS = {
 };
 
 const parseStyles = styles => {
-  return styles ? styles
-    .split(";")
-    .filter(style => style.split(":")[0] && style.split(":")[1])
-    .map(style => [
-      style
-        .split(":")[0]
-        .trim()
-        .replace(/-./g, c => c.substr(1).toUpperCase()),
-      style.split(":")[1].trim()
-    ])
-    .reduce(
-      (styleObj, style) => ({
-        ...styleObj,
-        [style[0]]: style[1]
-      }),
-      {}
-    ) : styles;
-  }
+  return styles
+    ? styles
+        .split(";")
+        .filter(style => style.split(":")[0] && style.split(":")[1])
+        .map(style => [
+          style
+            .split(":")[0]
+            .trim()
+            .replace(/-./g, c => c.substr(1).toUpperCase()),
+          style.split(":")[1].trim()
+        ])
+        .reduce(
+          (styleObj, style) => ({
+            ...styleObj,
+            [style[0]]: style[1]
+          }),
+          {}
+        )
+    : styles;
+};
 
 const rules = [
   {
@@ -291,7 +293,7 @@ class Compose extends React.Component {
     const { dispatch, action } = props;
 
     this.boundActionCreators = bindActionCreators(
-      ActionActionCreators,
+      ActionActions,
       dispatch
     );
 
@@ -299,9 +301,9 @@ class Compose extends React.Component {
       isInside: false,
       value:
         "content" in action && action["content"]
-          ? Value.fromJSON(action["content"])
+          ? Value.fromJSON(action["content"]["blockMap"])
           : initialValue,
-      colours: generateColours(action.conditionGroups.length),
+      colours: generateColours(action.condition_groups.length),
       preview: {
         visible: false,
         loading: false,
@@ -310,7 +312,8 @@ class Compose extends React.Component {
       visible: { filter: false, conditionGroup: false },
       contentLoading: false,
       hyperlink: { label: null, url: null },
-      image: { src: null, alt: null }
+      image: { src: null, alt: null },
+      deleting: {}
     };
   }
 
@@ -318,10 +321,10 @@ class Compose extends React.Component {
     const { action } = this.props;
 
     if (
-      prevProps.action.conditionGroups.length < action.conditionGroups.length
+      prevProps.action.condition_groups.length < action.condition_groups.length
     ) {
       this.setState({
-        colours: generateColours(action.conditionGroups.length)
+        colours: generateColours(action.condition_groups.length)
       });
     }
   }
@@ -569,13 +572,23 @@ class Compose extends React.Component {
     switch (e.key) {
       case "edit":
         this.setState({ visible: { ...visible, conditionGroup: true } });
-        this.boundActionCreators.openConditionGroupModal(conditionGroup);
+        this.boundActionCreators.openConditionGroupModal(conditionGroup, index);
         break;
       case "delete":
-        this.boundActionCreators.deleteConditionGroup({
+        action.condition_groups.splice(index, 1);
+        ActionActions.updateAction({
           actionId: action.id,
-          index,
-          onSuccess: action => updateAction(action)
+          payload: { condition_groups: action.condition_groups },
+          onError: error =>
+            this.setState({
+              error
+            }),
+          onSuccess: action => {
+            updateAction(action);
+            this.setState({
+              error: null
+            });
+          }
         });
         break;
       default:
@@ -628,7 +641,7 @@ class Compose extends React.Component {
 
     if (fn === "preview") {
       this.setState({ preview: { ...preview, loading: true } });
-      ActionActionCreators.previewContent({
+      ActionActions.previewContent({
         actionId: action.id,
         payload,
         onError: error =>
@@ -648,9 +661,9 @@ class Compose extends React.Component {
       });
     } else if (fn === "submit") {
       this.setState({ contentLoading: true });
-      this.boundActionCreators.updateContent({
+      ActionActions.updateAction({
         actionId: action.id,
-        payload,
+        payload: { content: payload },
         onError: error => this.setState({ contentLoading: false, error }),
         onSuccess: action => {
           this.setState({ contentLoading: false, error: null });
@@ -875,13 +888,13 @@ class Compose extends React.Component {
         </h3>
 
         {_.get(action, "filter.formulas", []).length > 0
-          ? `${action.filtered_data_length} records selected out of ${
+          ? `${action.filtered_data.length} records selected out of ${
               action.unfiltered_data_length
             } (${action.unfiltered_data_length -
-              action.filtered_data_length} filtered out)`
+              action.filtered_data.length} filtered out)`
           : "No filter is currently being applied"}
 
-        {action.datalab.data.length > 0 && (
+        {action.filtered_data.length > 0 && (
           <div className="filter_results">
             <Table
               size="small"
@@ -889,7 +902,7 @@ class Compose extends React.Component {
               pagination={{
                 pageSize: 5
               }}
-              dataSource={action.datalab.data.map((item, i) => ({
+              dataSource={action.filtered_data.map((item, i) => ({
                 ...item,
                 key: i
               }))}
@@ -937,8 +950,8 @@ class Compose extends React.Component {
           }}
         />
 
-        {action && action.conditionGroups && action.conditionGroups.length > 0
-          ? action.conditionGroups.map((conditionGroup, i) => {
+        {action && action.condition_groups && action.condition_groups.length > 0
+          ? action.condition_groups.map((conditionGroup, i) => {
               return (
                 <Draggable
                   key={i}
@@ -1019,7 +1032,7 @@ class Compose extends React.Component {
         />
 
         <PreviewModal
-          data={action.datalab.data}
+          data={action.filtered_data}
           order={action.datalab.order}
           preview={preview}
           onClose={() =>

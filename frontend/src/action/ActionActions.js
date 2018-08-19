@@ -21,7 +21,7 @@ export const createAction = ({
   payload.container = containerId;
 
   const parameters = {
-    url: `/workflow/`,
+    url: `/action/`,
     method: "POST",
     errorFn: onError,
     successFn: action => {
@@ -42,11 +42,9 @@ export const updateAction = ({
   payload,
   onError,
   onSuccess
-}) => dispatch => {
-  delete payload['datalab'];
-  
+}) => {
   const parameters = {
-    url: `/workflow/${actionId}/`,
+    url: `/action/${actionId}/`,
     method: "PATCH",
     errorFn: onError,
     successFn: action => {
@@ -64,7 +62,7 @@ export const updateAction = ({
 
 export const deleteAction = ({ actionId, onFinish }) => dispatch => {
   const parameters = {
-    url: `/workflow/${actionId}/`,
+    url: `/action/${actionId}/`,
     method: "DELETE",
     errorFn: error => {
       onFinish();
@@ -88,7 +86,7 @@ export const deleteAction = ({ actionId, onFinish }) => dispatch => {
 
 export const cloneAction = ({ actionId, onFinish }) => dispatch => {
   const parameters = {
-    url: `/workflow/${actionId}/clone_action/`,
+    url: `/action/${actionId}/clone_action/`,
     method: "POST",
     errorFn: error => {
       onFinish();
@@ -112,7 +110,7 @@ export const cloneAction = ({ actionId, onFinish }) => dispatch => {
 
 export const fetchAction = ({ actionId, onError, onSuccess }) => dispatch => {
   const parameters = {
-    url: `/workflow/${actionId}/retrieve_workflow/`,
+    url: `/action/${actionId}/`,
     method: "GET",
     errorFn: error => {
       onError();
@@ -210,30 +208,10 @@ export const deleteFormulaFromFilter = formulaIndex => (dispatch, getState) => {
   dispatch(refreshFormState(formState));
 };
 
-export const updateFilter = ({
-  actionId,
-  payload,
-  onError,
-  onSuccess
-}) => dispatch => {
-  const parameters = {
-    url: `/workflow/${actionId}/update_filter/`,
-    method: "PUT",
-    errorFn: error => onError(error),
-    successFn: action => {
-      onSuccess(action);
-      notification["success"]({
-        message: "Filter updated",
-        description: "The filter was successfully updated."
-      });
-    },
-    payload: payload
-  };
-
-  requestWrapper(parameters);
-};
-
-export const openConditionGroupModal = conditionGroup => {
+export const openConditionGroupModal = (
+  conditionGroup,
+  conditionGroupIndex
+) => {
   // Map the object representing the Condition Group model from the database into
   // the form object that will be used in the modal
   let formState = { conditions: [] };
@@ -271,7 +249,7 @@ export const openConditionGroupModal = conditionGroup => {
   return {
     type: OPEN_CONDITION_GROUP_MODAL,
     formState,
-    conditionGroup
+    conditionGroupIndex
   };
 };
 
@@ -365,102 +343,9 @@ export const deleteFormulaFromConditionGroup = (
   dispatch(refreshFormState(formState));
 };
 
-export const createConditionGroup = ({
-  actionId,
-  payload,
-  onError,
-  onSuccess
-}) => dispatch => {
-  const parameters = {
-    url: `/workflow/${actionId}/create_condition_group/`,
-    method: "PUT",
-    errorFn: error => onError(error),
-    successFn: action => {
-      onSuccess(action);
-      notification["success"]({
-        message: "Condition group created",
-        description: "The condition group was successfully created."
-      });
-    },
-    payload: payload
-  };
-
-  requestWrapper(parameters);
-};
-
-export const updateConditionGroup = ({
-  actionId,
-  conditionGroup,
-  payload,
-  onError,
-  onSuccess
-}) => dispatch => {
-  payload.originalName = conditionGroup.name;
-  const parameters = {
-    url: `/workflow/${actionId}/update_condition_group/`,
-    method: "PUT",
-    errorFn: error => onError(error),
-    successFn: action => {
-      onSuccess(action);
-      notification["success"]({
-        message: "Condition group updated",
-        description: "The condition group was successfully updated."
-      });
-    },
-    payload: payload
-  };
-
-  requestWrapper(parameters);
-};
-
-export const deleteConditionGroup = ({
-  actionId,
-  index,
-  onSuccess
-}) => dispatch => {
-  const parameters = {
-    url: `/workflow/${actionId}/delete_condition_group/`,
-    method: "PUT",
-    errorFn: error => console.log(error),
-    successFn: action => {
-      onSuccess(action);
-      notification["success"]({
-        message: "Condition group deleted",
-        description: "The condition group was successfully deleted."
-      });
-    },
-    payload: { index: index }
-  };
-
-  requestWrapper(parameters);
-};
-
-export const updateContent = ({
-  actionId,
-  payload,
-  onError,
-  onSuccess
-}) => dispatch => {
-  const parameters = {
-    url: `/workflow/${actionId}/update_content/`,
-    method: "PUT",
-    errorFn: error => onError(error),
-    successFn: action => {
-      onSuccess(action);
-      notification["success"]({
-        message: "Content saved",
-        description: "The content was successfully saved."
-      });
-    },
-    payload: payload
-  };
-
-  requestWrapper(parameters);
-};
-
 export const previewContent = ({ actionId, payload, onError, onSuccess }) => {
   const parameters = {
-    url: `/workflow/${actionId}/preview_content/`,
+    url: `/action/${actionId}/preview_content/`,
     method: "PUT",
     errorFn: error => {
       onError(error);
@@ -474,7 +359,7 @@ export const previewContent = ({ actionId, payload, onError, onSuccess }) => {
 
 export const sendEmail = ({ actionId, payload, onError, onSuccess }) => {
   const parameters = {
-    url: `/workflow/${actionId}/send_email/`,
+    url: `/action/${actionId}/send_email/`,
     method: "PUT",
     errorFn: error => onError(error),
     successFn: () => {
@@ -498,7 +383,7 @@ export const updateSchedule = ({
   isCreate
 }) => {
   const parameters = {
-    url: `/workflow/${selected}/update_schedule/`,
+    url: `/action/${selected}/update_schedule/`,
     method: "PATCH",
     errorFn: onError,
     successFn: action => {
@@ -518,7 +403,7 @@ export const updateSchedule = ({
 
 export const deleteSchedule = ({ selected, onError, onSuccess }) => {
   const parameters = {
-    url: `/workflow/${selected}/delete_schedule/`,
+    url: `/action/${selected}/delete_schedule/`,
     method: "PATCH",
     errorFn: onError,
     successFn: action => {
@@ -528,28 +413,6 @@ export const deleteSchedule = ({ selected, onError, onSuccess }) => {
         description: "The schedule was successfully deleted."
       });
     }
-  };
-  requestWrapper(parameters);
-};
-
-export const updateEmailSettings = ({
-  actionId,
-  payload,
-  onError,
-  onSuccess
-}) => {
-  const parameters = {
-    url: `/workflow/${actionId}/update_email_settings/`,
-    method: "PATCH",
-    errorFn: error => onError(error),
-    successFn: action => {
-      onSuccess(action);
-      notification["success"]({
-        message: "Email settings updated",
-        description: "The email settings were successfully updated."
-      });
-    },
-    payload
   };
   requestWrapper(parameters);
 };

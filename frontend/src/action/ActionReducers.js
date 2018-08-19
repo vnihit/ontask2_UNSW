@@ -41,12 +41,12 @@ function action(state = {}, action) {
     case OPEN_CONDITION_GROUP_MODAL:
       return Object.assign({}, state, {
         formState: action.formState,
-        conditionGroup: action.conditionGroup
+        conditionGroupIndex: action.conditionGroupIndex,
       });
     case CLOSE_CONDITION_GROUP_MODAL:
       return Object.assign({}, state, {
         formState: null,
-        conditionGroup: null
+        conditionGroupIndex: undefined
       });
 
     default:

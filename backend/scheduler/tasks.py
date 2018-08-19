@@ -8,8 +8,7 @@ import json
 from datetime import datetime
 
 from datasource.utils import retrieve_sql_data, retrieve_file_from_s3
-from workflow.models import Workflow
-from workflow.utils import perform_email_job
+from action.models import Action
 from .utils import create_crontab, send_email
 
 from ontask.settings import NOSQL_DATABASE
@@ -84,9 +83,9 @@ def refresh_datasource_data(datasource_id):
 @shared_task
 def workflow_send_email(workflow_id):
     """ Send email based on the schedule in workflow model """
-    workflow = Workflow.objects.get(id=ObjectId(workflow_id))
+    workflow = Action.objects.get(id=ObjectId(workflow_id))
     
-    email_job = perform_email_job(workflow, "Scheduled")
+    email_job = workflow.perform_email_job("Scheduled")
     
     workflow.emailJobs.append(email_job)
     workflow.save()
