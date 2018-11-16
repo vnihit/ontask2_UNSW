@@ -26,7 +26,7 @@ class ActionTab extends React.Component {
           deleting: { [actionId]: true }
         });
 
-        apiRequest(`/workflow/${actionId}`, {
+        apiRequest(`/action/${actionId}`, {
           method: "DELETE",
           onSuccess: containers => {
             this.setState({ deleting: { [actionId]: false } });
@@ -59,7 +59,7 @@ class ActionTab extends React.Component {
           cloning: { [actionId]: true }
         });
 
-        apiRequest(`/workflow/${actionId}/clone_action/`, {
+        apiRequest(`/action/${actionId}/clone_action/`, {
           method: "POST",
           onSuccess: containers => {
             this.setState({ cloning: { [actionId]: false } });

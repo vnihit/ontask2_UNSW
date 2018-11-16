@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework_mongoengine.serializers import DocumentSerializer
 
-from .models import Workflow
+from .models import Action
 
 
 class ActionSerializer(DocumentSerializer):
@@ -9,5 +9,5 @@ class ActionSerializer(DocumentSerializer):
     options = serializers.ReadOnlyField()
 
     class Meta:
-        model = Workflow
+        model = Action
         fields = "__all__"

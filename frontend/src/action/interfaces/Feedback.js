@@ -44,7 +44,7 @@ class Feedback extends React.Component {
 
     this.setState({ loading: true, error: null });
 
-    apiRequest(`/workflow/${actionId}/submit_feedback/?job=${jobId}`, {
+    apiRequest(`/action/${actionId}/submit_feedback/?job=${jobId}`, {
       method: "POST",
       payload: { dropdown, textbox },
       onSuccess: response => {

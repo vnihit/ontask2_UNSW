@@ -6,7 +6,7 @@ from rest_framework_mongoengine.serializers import (
 
 from .models import Datalab
 from datasource.models import Datasource
-from workflow.models import Workflow, EmailJob, Email
+from action.models import Action, EmailJob, Email
 
 
 class EmailSerializer(EmbeddedDocumentSerializer):
@@ -28,7 +28,7 @@ class ActionSerializer(DocumentSerializer):
     emailField = serializers.SerializerMethodField()
 
     class Meta:
-        model = Workflow
+        model = Action
         fields = ["id", "name", "emailJobs", "emailField"]
 
     def get_emailField(self, action):
@@ -54,7 +54,7 @@ class DatalabSerializer(DocumentSerializer):
         return serializer.data
 
     def get_actions(self, datalab):
-        actions = Workflow.objects(datalab=datalab.id)
+        actions = Action.objects(datalab=datalab.id)
         serializer = ActionSerializer(actions, many=True)
         return serializer.data
 

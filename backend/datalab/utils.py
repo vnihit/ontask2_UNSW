@@ -5,7 +5,7 @@ import numexpr as ne
 from .models import Datalab
 from datasource.models import Datasource
 from audit.serializers import AuditSerializer
-from workflow.models import Workflow
+from action.models import Action
 
 
 def bind_column_types(steps):
@@ -194,7 +194,7 @@ def combine_data(steps, datalab_id=None):
     # Consumed by the computed column
     tracking_feedback_data = {}
     if datalab_id:
-        actions = Workflow.objects(datalab=datalab_id)
+        actions = Action.objects(datalab=datalab_id)
         for action in actions:
             action_id = str(action.id)
             if not "emailSettings" in action or not len(action["emailJobs"]):

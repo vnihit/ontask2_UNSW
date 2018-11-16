@@ -25,14 +25,14 @@ from rest_framework import routers
 from container.views import ContainerViewSet
 from datasource.views import DatasourceViewSet
 from datalab.views import DatalabViewSet
-from workflow.views import WorkflowViewSet
+from action.views import ActionViewSet
 from audit.views import AuditViewSet
 
 router = routers.DefaultRouter()
 router.register("container", ContainerViewSet, "container")
 router.register("datasource", DatasourceViewSet, "datasource")
 router.register("datalab", DatalabViewSet, "datalab")
-router.register("workflow", WorkflowViewSet, "workflow")
+router.register("action", ActionViewSet, "action")
 router.register("audit", AuditViewSet, "audit")
 
 urlpatterns = [path("auth/", include("accounts.urls"))]

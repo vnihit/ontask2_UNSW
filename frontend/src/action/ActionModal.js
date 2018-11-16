@@ -20,7 +20,7 @@ class ActionModal extends React.Component {
     form.validateFields((err, payload) => {
       if (err) return;
 
-      let url = "/workflow/";
+      let url = "/action/";
       if (selected) {
         url += `${selected.id}/`;
       } else {

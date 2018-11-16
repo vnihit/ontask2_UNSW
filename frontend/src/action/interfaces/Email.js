@@ -57,7 +57,7 @@ class Email extends React.Component {
       sun: { order: 6, label: "Sunday" }
     };
 
-    apiRequest(`/workflow/${action.id}/content/`, {
+    apiRequest(`/action/${action.id}/content/`, {
       method: "GET",
       onSuccess: populatedContent =>
         this.setState({ populatedContent, previewing: false }),
@@ -74,7 +74,7 @@ class Email extends React.Component {
       const { emailSettings } = payload;
       this.setState({ sending: true, error: null });
 
-      apiRequest(`/workflow/${action.id}/email/`, {
+      apiRequest(`/action/${action.id}/email/`, {
         method: "POST",
         payload: { emailSettings },
         onSuccess: () => {
@@ -91,7 +91,7 @@ class Email extends React.Component {
   updateEmailSettings = ({ emailSettings, onSuccess, onError }) => {
     const { action, updateAction } = this.props;
 
-    apiRequest(`/workflow/${action.id}/`, {
+    apiRequest(`/action/${action.id}/`, {
       method: "PATCH",
       payload: { emailSettings },
       onSuccess: action => {
@@ -110,7 +110,7 @@ class Email extends React.Component {
 
     const isCreate = !action.schedule;
 
-    apiRequest(`/workflow/${action.id}/schedule/`, {
+    apiRequest(`/action/${action.id}/schedule/`, {
       method: "PUT",
       payload,
       onSuccess: action => {
@@ -130,7 +130,7 @@ class Email extends React.Component {
   deleteSchedule = ({ onSuccess, onError }) => {
     const { action, updateAction } = this.props;
 
-    apiRequest(`/workflow/${action.id}/schedule/`, {
+    apiRequest(`/action/${action.id}/schedule/`, {
       method: "DELETE",
       onSuccess: action => {
         notification["success"]({

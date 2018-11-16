@@ -67,7 +67,7 @@ class Compose extends React.Component {
   updateFilter = ({ filter, method, onSuccess, onError }) => {
     const { action, updateAction } = this.props;
 
-    apiRequest(`/workflow/${action.id}/filter/`, {
+    apiRequest(`/action/${action.id}/filter/`, {
       method,
       payload: { filter },
       onSuccess: action => {
@@ -84,7 +84,7 @@ class Compose extends React.Component {
   updateRule = ({ rule, ruleIndex, method, onSuccess, onError }) => {
     const { action, updateAction } = this.props;
 
-    apiRequest(`/workflow/${action.id}/rules/`, {
+    apiRequest(`/action/${action.id}/rules/`, {
       method,
       payload: { rule, ruleIndex },
       onSuccess: action => {
@@ -103,7 +103,7 @@ class Compose extends React.Component {
   previewContent = ({ content, onSuccess, onError }) => {
     const { action } = this.props;
 
-    apiRequest(`/workflow/${action.id}/content/`, {
+    apiRequest(`/action/${action.id}/content/`, {
       method: "POST",
       payload: { content },
       onSuccess: populatedContent => {
@@ -117,7 +117,7 @@ class Compose extends React.Component {
   updateContent = ({ content, onSuccess, onError }) => {
     const { action, updateAction } = this.props;
 
-    apiRequest(`/workflow/${action.id}/content/`, {
+    apiRequest(`/action/${action.id}/content/`, {
       method: "PUT",
       payload: { content },
       onSuccess: action => {

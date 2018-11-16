@@ -14,7 +14,7 @@ import jwt
 
 from .serializers import ActionSerializer
 from .models import (
-    Workflow,
+    Action,
     EmailSettings,
     EmailJob,
     Email,
@@ -23,7 +23,7 @@ from .models import (
     Content,
     Schedule,
 )
-from .permissions import WorkflowPermissions
+from .permissions import ActionPermissions
 
 from container.views import ContainerViewSet
 from container.serializers import ContainerSerializer
@@ -43,17 +43,17 @@ PIXEL_GIF_DATA = base64.b64decode(
 )
 
 
-class WorkflowViewSet(viewsets.ModelViewSet):
+class ActionViewSet(viewsets.ModelViewSet):
     lookup_field = "id"
     serializer_class = ActionSerializer
-    permission_classes = [IsAuthenticated, WorkflowPermissions]
+    permission_classes = [IsAuthenticated, ActionPermissions]
 
     def get_queryset(self):
         # Get the containers this user owns or has access to
         containers = ContainerViewSet.get_queryset(self)
 
         # Retrieve only the DataLabs that belong to these containers
-        actions = Workflow.objects(container__in=containers)
+        actions = Action.objects(container__in=containers)
 
         return actions
 
@@ -181,7 +181,7 @@ class WorkflowViewSet(viewsets.ModelViewSet):
             arguments = dumps({"action_id": id})
 
             task_name, async_tasks = create_scheduled_task(
-                "workflow_send_email", request.data, arguments
+                "action_send_email", request.data, arguments
             )
             request.data["taskName"] = task_name
             request.data["asyncTasks"] = async_tasks
@@ -223,7 +223,7 @@ class WorkflowViewSet(viewsets.ModelViewSet):
                 # Invalid token, ignore the read receipt
                 return HttpResponse(PIXEL_GIF_DATA, content_type="image/gif")
 
-            action = Workflow.objects.get(id=decrypted_token["action_id"])
+            action = Action.objects.get(id=decrypted_token["action_id"])
 
             did_update = False
             for job in action.emailJobs:
@@ -287,7 +287,7 @@ class WorkflowViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=["post"], permission_classes=[IsAuthenticated])
     def submit_feedback(self, request, id=None):
-        action = Workflow.objects.get(id=id)
+        action = Action.objects.get(id=id)
         job_id = request.GET.get("job")
 
         dropdown = request.data["dropdown"]

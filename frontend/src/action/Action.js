@@ -28,7 +28,7 @@ class Action extends React.Component {
     if (isFeedbackForm) {
       this.setState({ isFeedbackForm });
 
-      apiRequest(`/workflow/${actionId}/feedback/?job=${jobId}`, {
+      apiRequest(`/action/${actionId}/feedback/?job=${jobId}`, {
         method: "GET",
         onSuccess: feedback =>
           this.setState({
@@ -38,7 +38,7 @@ class Action extends React.Component {
         onError: () => this.setState({ fetching: false })
       });
     } else {
-      apiRequest(`/workflow/${actionId}/`, {
+      apiRequest(`/action/${actionId}/`, {
         method: "GET",
         onSuccess: action => this.setState({ fetching: false, action }),
         onError: () => this.setState({ fetching: false })

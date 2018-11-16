@@ -111,7 +111,7 @@ class EmailJob(EmbeddedDocument):
     included_feedback = BooleanField()
 
 
-class Workflow(Document):
+class Action(Document):
     container = ReferenceField(
         Container, required=True, reverse_delete_rule=2
     )  # Cascade delete if container is deleted
@@ -125,7 +125,7 @@ class Workflow(Document):
     content = EmbeddedDocumentField(Content)
     emailSettings = EmbeddedDocumentField(EmailSettings)
     schedule = EmbeddedDocumentField(Schedule, null=True, required=False)
-    linkId = StringField(null=True)  # link_id is unique across workflow objects
+    linkId = StringField(null=True)  # link_id is unique across action objects
     emailJobs = EmbeddedDocumentListField(EmailJob)
 
     @property
@@ -313,7 +313,7 @@ class Workflow(Document):
             ).decode("utf-8")
 
             tracking_link = (
-                f"{BACKEND_DOMAIN}/workflow/read_receipt/?email={tracking_token}"
+                f"{BACKEND_DOMAIN}/action/read_receipt/?email={tracking_token}"
             )
             tracking_pixel = f"<img src='{tracking_link}'/>"
             email_content += tracking_pixel

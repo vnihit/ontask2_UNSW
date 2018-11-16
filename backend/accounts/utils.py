@@ -23,7 +23,7 @@ from datalab.models import (
     Column,
 )
 from datalab.utils import combine_data
-from workflow.models import Workflow, Filter, Rule, Condition, Formula
+from action.models import Action, Filter, Rule, Condition, Formula
 
 from scheduler.utils import send_email
 
@@ -402,7 +402,7 @@ def seed_data(user):
     }
 
     # Create a demo action
-    demo_action = Workflow(
+    demo_action = Action(
         container=demo_container.id,
         datalab=demo_datalab.id,
         name="Demo Action",
