@@ -1,22 +1,15 @@
 import React from "react";
-import { bindActionCreators } from "redux";
-import { connect } from "react-redux";
+
 import { Link } from "react-router-dom";
 import { Layout, Breadcrumb, Icon, Button, Spin } from "antd";
 
-import * as ContainerActionCreators from "./ContainerActions";
-import {
-  updateSchedule,
-  deleteSchedule
-} from "../datasource/DatasourceActions";
 
 import ContainerModal from "./ContainerModal";
 import ContainerList from "./ContainerList";
 import ContainerShare from "./ContainerShare";
 import DatasourceModal from "../datasource/DatasourceModal";
 import ActionModal from "../action/ActionModal";
-import SchedulerModal from "../scheduler/SchedulerModal";
-import DataPreview from "../datasource/DataPreview";
+
 
 import "./Container.css";
 
@@ -25,20 +18,11 @@ const { Content } = Layout;
 class Container extends React.Component {
   constructor(props) {
     super(props);
-    const { dispatch } = props;
-
-    this.boundActionCreators = bindActionCreators(
-      { ...ContainerActionCreators, updateSchedule, deleteSchedule },
-      dispatch
-    );
-
     this.state = {
       container: { visible: false, selected: null },
       datasource: { visible: false, selected: null, data: {} },
-      scheduler: { visible: false, selected: null, data: {} },
       action: { visible: false, selected: null, data: {} },
-      sharing: { visible: false, selected: null },
-      dataPreview: { visible: false, selected: null, data: {} }
+      sharing: { visible: false, selected: null }
     };
   }
 
@@ -68,6 +52,8 @@ class Container extends React.Component {
       }
     });
   };
+
+
 
   render() {
     const { isFetching, containers } = this.props;
@@ -120,10 +106,7 @@ class Container extends React.Component {
                     containers={containers}
                   />
 
-                  <DataPreview
-                    {...dataPreview}
-                    closeModal={() => this.closeModal("dataPreview")}
-                  />
+
 
                   <ActionModal
                     {...action}
@@ -135,12 +118,7 @@ class Container extends React.Component {
                     closeModal={() => this.closeModal("sharing")}
                   />
 
-                  <SchedulerModal
-                    {...scheduler}
-                    onUpdate={this.boundActionCreators.updateSchedule}
-                    onDelete={this.boundActionCreators.deleteSchedule}
-                    closeModal={() => this.closeModal("scheduler")}
-                  />
+
 
                   {containers && containers.length > 0 ? (
                     <ContainerList openModal={this.openModal} />
@@ -169,4 +147,4 @@ const mapStateToProps = state => {
   };
 };
 
-export default connect(mapStateToProps)(Container);
+export default Container;

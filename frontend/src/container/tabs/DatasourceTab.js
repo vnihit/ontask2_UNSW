@@ -1,12 +1,11 @@
 import React from "react";
-import { bindActionCreators } from "redux";
-import { connect } from "react-redux";
+//import { bindActionCreators } from "redux";
+//import { connect } from "react-redux";
 import { Input, Icon, Tooltip, Button, Card, Modal } from "antd";
-
-import {
-  getDatasourceData,
-  deleteDatasource
-} from "../../datasource/DatasourceActions";
+import apiRequest from "../../shared/apiRequest";
+import { notification } from "antd";
+import SchedulerModal from "../../scheduler/SchedulerModal";
+import DataPreview from "../../datasource/DataPreview";
 
 const { Meta } = Card;
 const confirm = Modal.confirm;
@@ -14,15 +13,68 @@ const confirm = Modal.confirm;
 class DatasourceTab extends React.Component {
   constructor(props) {
     super(props);
-    const { dispatch } = props;
 
-    this.boundActionCreators = bindActionCreators(
-      { getDatasourceData, deleteDatasource },
-      dispatch
-    );
+    this.state = {
+      filter: null,
+      loading: {},
+      fetching: {},
+      scheduler: { visible: false, selected: null, data: {} },
+      dataPreview: { visible: false, selected: null, data: {} }
+    };
 
-    this.state = { filter: null, loading: {}, fetching: {} };
   }
+
+  getDatasourceData = ({
+    datasourceId,
+    onError,
+    onSuccess
+  })  => {
+    const parameters = {
+      
+      method: 'GET',
+      onError: onError,
+      onSuccess: response => onSuccess(response.data)
+    }
+    apiRequest(`/datasource/${datasourceId}/`,parameters);
+  }
+
+  updateSchedule = ({ selected, payload, onError, onSuccess, isCreate }) => {
+    const { updateContainers } = this.props;
+
+    const parameters = {
+      method: "PATCH",
+      onError: onError,
+      onSuccess: containers => {
+        updateContainers(containers);
+        notification["success"]({
+          message: `Schedule ${isCreate ? "created" : "updated"}`,
+          description: `The schedule was successfully ${
+            isCreate ? "created" : "updated"
+          }.`
+        });
+      },
+      payload
+    };
+
+    apiRequest(`/datasource/${selected}/update_schedule/`, parameters);
+  };
+
+  deleteSchedule = ({ selected, onError, onSuccess }) => {
+    const { updateContainers } = this.props;
+
+    const parameters = {
+      method: "PATCH",
+      onError: onError,
+      onSuccess: containers => {
+        updateContainers(containers);
+        notification["success"]({
+          message: "Schedule deleted",
+          description: "The schedule was successfully deleted."
+        });
+      }
+    };
+    apiRequest(`/datasource/${selected}/delete_schedule/`, parameters);
+  };
 
   previewDatasource = datasourceId => {
     const { openModal } = this.props;
@@ -31,28 +83,35 @@ class DatasourceTab extends React.Component {
       fetching: { [datasourceId]: true }
     });
 
-    this.boundActionCreators.getDatasourceData({
-      datasourceId,
-      onError: error => console.log(error),
-      onSuccess: datasource => {
-        let columns = {};
-        if (datasource.length !== 0) {
-          columns = Object.keys(datasource[0]).map(k => {
-            return { title: k, dataIndex: k };
-          });
-        }
-
-        this.setState({ fetching: { [datasourceId]: false } });
-
-        openModal({
-          type: "dataPreview",
-          data: { columns, datasource }
+    let onError = error => console.log(error);
+    let onSuccess = datasource => {
+      let columns = {};
+      if (datasource.length !== 0) {
+        columns = Object.keys(datasource[0]).map(k => {
+          return { title: k, dataIndex: k };
         });
       }
-    });
+      
+      this.setState({ fetching: { [datasourceId]: false } });
+
+      openModal({
+        type: "dataPreview",
+        data: { columns, datasource }
+      });
+    };
+
+    const parameters = {
+      method: 'GET',
+      onError: onError,
+      onSuccess: response => onSuccess(response.data)
+    }
+
+    apiRequest(`/datasource/${datasourceId}/`,parameters);
   };
 
   deleteDatasource = datasourceId => {
+    const { updateContainers } = this.props;
+
     confirm({
       title: "Confirm datasource deletion",
       content: "Are you sure you want to delete this datasource?",
@@ -64,10 +123,22 @@ class DatasourceTab extends React.Component {
           loading: { [datasourceId]: true }
         });
 
-        this.boundActionCreators.deleteDatasource({
-          datasourceId,
-          onFinish: () => {
+        apiRequest(`/datasource/${datasourceId}/`, {
+          method: "DELETE",
+          onError: error => {
             this.setState({ loading: { [datasourceId]: false } });
+            notification["error"]({
+              message: "Datasource deletion failed",
+              description: error
+            });
+          },
+          onSuccess: containers => {
+            this.setState({ loading: { [datasourceId]: false } });
+            updateContainers(containers);
+            notification["success"]({
+              message: "Datasource deleted",
+              description: "The datasource was successfully deleted."
+            });
           }
         });
       }
@@ -76,7 +147,7 @@ class DatasourceTab extends React.Component {
 
   render() {
     const { containerId, datasources, openModal } = this.props;
-    const { filter, loading, fetching } = this.state;
+    const { filter, loading, fetching, scheduler, dataPreview } = this.state;
 
     const typeMap = {
       mysql: "MySQL",
@@ -88,28 +159,29 @@ class DatasourceTab extends React.Component {
       mssql: "MSSQL"
     };
 
+
+
     return (
       <div className="tab">
-        {datasources &&
-          datasources.length > 0 && (
-            <div className="filter_wrapper">
-              <div className="filter">
-                <Input
-                  placeholder="Filter datasources by name"
-                  value={filter}
-                  addonAfter={
-                    <Tooltip title="Clear filter">
-                      <Icon
-                        type="close"
-                        onClick={() => this.setState({ filter: null })}
-                      />
-                    </Tooltip>
-                  }
-                  onChange={e => this.setState({ filter: e.target.value })}
-                />
-              </div>
+        {datasources && datasources.length > 0 && (
+          <div className="filter_wrapper">
+            <div className="filter">
+              <Input
+                placeholder="Filter datasources by name"
+                value={filter}
+                addonAfter={
+                  <Tooltip title="Clear filter">
+                    <Icon
+                      type="close"
+                      onClick={() => this.setState({ filter: null })}
+                    />
+                  </Tooltip>
+                }
+                onChange={e => this.setState({ filter: e.target.value })}
+              />
             </div>
-          )}
+          </div>
+        )}
 
         {datasources &&
           datasources.map((datasource, i) => {
@@ -197,6 +269,18 @@ class DatasourceTab extends React.Component {
             );
           })}
 
+        <SchedulerModal
+          {...scheduler}
+          onUpdate={this.updateSchedule}
+          onDelete={this.deleteSchedule}
+          closeModal={() => this.closeModal("scheduler")}
+        />
+
+        <DataPreview
+          {...dataPreview}
+          closeModal={() => this.closeModal("dataPreview")}
+        />
+
         <div
           className="add item"
           onClick={() => {
@@ -211,4 +295,4 @@ class DatasourceTab extends React.Component {
   }
 }
 
-export default connect()(DatasourceTab);
+export default DatasourceTab;

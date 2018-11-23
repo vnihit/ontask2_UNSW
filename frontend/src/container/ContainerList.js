@@ -29,6 +29,7 @@ class ContainerList extends React.Component {
   updateContainers = containers => {
     const { dispatch } = this.props;
     
+    
     dispatch(ContainerActionCreators.storeContainers(containers));
   };
 

@@ -1,6 +1,5 @@
 import React from "react";
-import { bindActionCreators } from "redux";
-import { connect } from "react-redux";
+import apiRequest from "../shared/apiRequest";
 import {
   Button,
   Modal,
@@ -11,15 +10,15 @@ import {
   Upload,
   Icon,
   Tooltip,
-  message
+  message,
+  notification
 } from "antd";
 import _ from "lodash";
-
-import * as DatasourceActionCreators from "./DatasourceActions";
 
 import formItemLayout from "../shared/FormItemLayout";
 
 import "./Datasource.css";
+import { updateContainer } from "../container/ContainerActions";
 
 const FormItem = Form.Item;
 const { TextArea } = Input;
@@ -29,12 +28,6 @@ const Dragger = Upload.Dragger;
 class DatasourceModal extends React.Component {
   constructor(props) {
     super(props);
-    const { dispatch } = props;
-
-    this.boundActionCreators = bindActionCreators(
-      DatasourceActionCreators,
-      dispatch
-    );
 
     this.state = {
       file: null,
@@ -44,6 +37,67 @@ class DatasourceModal extends React.Component {
       sheetnames: null
     };
   }
+
+  createDatasource = ({ containerId, payload, file, onError, onSuccess }) => {
+    payload.container = containerId;
+
+    const { updateContainers } = this.props;
+
+    let data;
+    if (file) {
+      data = new FormData();
+      data.append("file", file, file.name);
+      data.append("name", payload.name);
+      data.append("container", payload.container);
+      data.append("payload", JSON.stringify(payload));
+    } else {
+      data = payload;
+    }
+
+    const parameters = {
+      method: "POST",
+      onError: onError,
+      onSuccess: container => {
+        updateContainers(container);
+        notification["success"]({
+          message: "Datasource created",
+          description: "The datasource was successfully created."
+        });
+      },
+      payload: data,
+      isJSON: !file
+    };
+
+    apiRequest(`/datasource/`, parameters);
+  };
+
+  updateDatasource = ({ datasourceId, payload, file, onError, onSuccess }) => {
+    let data;
+    if (file) {
+      data = new FormData();
+      data.append("file", file, file.name);
+      data.append("name", payload.name);
+      data.append("payload", JSON.stringify(payload));
+    } else {
+      data = payload;
+    }
+
+    const parameters = {
+      method: "PATCH",
+      onError: onError,
+      onSuccess: container => {
+        updateContainer(container);
+        notification["success"]({
+          message: "Datasource updated",
+          description: "The datasource was successfully updated."
+        });
+      },
+      payload: data,
+      isJSON: !file
+    };
+
+    apiRequest(`/datasource/${datasourceId}/`, parameters);
+  };
 
   handleOk = () => {
     const { form, selected, data, closeModal } = this.props;
@@ -63,8 +117,7 @@ class DatasourceModal extends React.Component {
 
       this.setState({ loading: true });
 
-      const callFn = selected ? "updateDatasource" : "createDatasource";
-      this.boundActionCreators[callFn]({
+      const parameters = {
         containerId: data && data.containerId,
         datasourceId: selected && selected.id,
         payload,
@@ -75,7 +128,13 @@ class DatasourceModal extends React.Component {
           form.resetFields();
           closeModal();
         }
-      });
+      };
+
+      if (!selected) {
+        this.createDatasource(parameters);
+      } else {
+        this.updateDatasource(parameters);
+      }
     });
   };
 
@@ -96,14 +155,25 @@ class DatasourceModal extends React.Component {
   fetchSheetnames = (file, payload) => {
     this.setState({ loading: true });
 
-    this.boundActionCreators.fetchSheetnames({
-      file,
-      payload,
+    let data;
+    if (file) {
+      data = new FormData();
+      data.append("file", file, file.name);
+    } else {
+      data = payload;
+    }
+
+    const parameters = {
+      method: "POST",
       onError: error => this.setState({ loading: false, error }),
       onSuccess: sheetnames => {
         this.setState({ loading: false, sheetnames });
-      }
-    });
+      },
+      payload: data,
+      isJSON: !file
+    };
+
+    apiRequest(`/datasource/get_sheetnames/`, parameters);
   };
 
   handleFileDrop = e => {
@@ -469,7 +539,4 @@ class DatasourceModal extends React.Component {
   }
 }
 
-export default _.flow(
-  connect(),
-  Form.create()
-)(DatasourceModal);
+export default Form.create()(DatasourceModal);
