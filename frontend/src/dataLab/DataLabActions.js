@@ -87,7 +87,9 @@ const storeDataLab = dataLab => {
     },
     data: dataLab.data ? dataLab.data : [],
     datasources: dataLab.datasources,
-    actions: dataLab.actions
+    actions: dataLab.actions,
+    filter: dataLab.filter,
+    filteredData: dataLab.filteredData ? dataLab.filteredData : {} 
   };
 };
 
@@ -741,3 +743,8 @@ export const changePinState = (dataLabId, payload) => (dispatch, getState) => {
 
   requestWrapper(parameters);
 };
+
+export const updateFilter = dataLab => dispatch => {
+  dispatch(storeDataLab(dataLab));
+};
+

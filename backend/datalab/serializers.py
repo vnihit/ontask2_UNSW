@@ -47,6 +47,7 @@ class DatasourceSerializer(DocumentSerializer):
 class DatalabSerializer(DocumentSerializer):
     datasources = serializers.SerializerMethodField()
     actions = serializers.SerializerMethodField()
+    filteredData = serializers.ReadOnlyField()
 
     def get_datasources(self, datalab):
         datasources = Datasource.objects(container=datalab["container"].id)

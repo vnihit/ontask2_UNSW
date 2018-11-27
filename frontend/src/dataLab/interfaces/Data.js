@@ -9,7 +9,8 @@ import {
   Popover,
   Tooltip,
   Button,
-  Input
+  Input,
+  notification
 } from "antd";
 import moment from "moment";
 
@@ -19,7 +20,17 @@ import VisualisationModal from "../visualisation/VisualisationModal";
 
 import EditableField from "../data-manipulation/EditableField";
 
+import QueryBuilder from "../../action/interfaces/QueryBuilder";
+
+import apiRequest from "../../shared/apiRequest";
+
 const Search = Input.Search;
+
+const methodMap = {
+  POST: "created",
+  PUT: "updated",
+  DELETE: "deleted"
+};
 
 class Data extends React.Component {
   constructor(props) {
@@ -36,15 +47,20 @@ class Data extends React.Component {
       editable: {},
       edit: { field: null, primary: null },
       saved: {},
-      searchTerm: ""
+      searchTerm: "",
+      querybuilder: {
+        visible: false
+      }
     };
   }
 
   initialiseData = () => {
-    const { data, build } = this.props;
+    const { filteredData, build } = this.props;
     const { searchTerm } = this.state;
 
-    if (!data || !build) return [];
+    if (!filteredData || !build) return [];
+
+    const { data } = filteredData;
 
     const term = searchTerm.trim().toLowerCase();
 
@@ -52,10 +68,10 @@ class Data extends React.Component {
       term === ""
         ? data
         : data.filter(row =>
-          String(Object.values(row))
-            .toLowerCase()
-            .includes(term)
-        );
+            String(Object.values(row))
+              .toLowerCase()
+              .includes(term)
+          );
 
     return tableData;
   };
@@ -153,8 +169,8 @@ class Data extends React.Component {
     label.length > 15 ? (
       <Popover content={label}>{`${label.slice(0, 15)}...`}</Popover>
     ) : (
-        label
-      );
+      label
+    );
 
   DatasourceColumns = stepIndex => {
     const { build } = this.props;
@@ -172,22 +188,22 @@ class Data extends React.Component {
       const title = isPrimaryOrMatching ? (
         truncatedLabel
       ) : (
-          <div className="column_header">
-            <Dropdown
-              trigger={["click"]}
-              overlay={
-                <Menu onClick={e => this.handleHeaderClick(e, stepIndex, field)}>
-                  <Menu.Item key="visualise">
-                    <Icon type="area-chart" style={{ marginRight: 5 }} />
-                    Visualise
+        <div className="column_header">
+          <Dropdown
+            trigger={["click"]}
+            overlay={
+              <Menu onClick={e => this.handleHeaderClick(e, stepIndex, field)}>
+                <Menu.Item key="visualise">
+                  <Icon type="area-chart" style={{ marginRight: 5 }} />
+                  Visualise
                 </Menu.Item>
-                </Menu>
-              }
-            >
-              <a className="datasource">{label}</a>
-            </Dropdown>
-          </div>
-        );
+              </Menu>
+            }
+          >
+            <a className="datasource">{label}</a>
+          </Dropdown>
+        </div>
+      );
 
       columns.push({
         className: "column",
@@ -321,7 +337,7 @@ class Data extends React.Component {
               </Menu>
             }
           > */}
-            <a className="computed">{truncatedLabel}</a>
+          <a className="computed">{truncatedLabel}</a>
           {/* </Dropdown> */}
         </div>
       );
@@ -392,17 +408,103 @@ class Data extends React.Component {
     this.setState({ filter, sort });
   };
 
-  render() {
-    const { visualisation, edit, saved, searchTerm } = this.state;
-    const { data } = this.props;
+  createQueryModules = () => {
+    // datalab has different structure with action
+    // since quertBuyild component needs a "modules" parameter
+    // we create it manually from build.step
 
-    const totalDataAmount = data ? data.length : 0;
+    const { build } = this.props;
+    if (!build) return null;
+
+    const { steps } = build;
+    const modules = [];
+
+    let computedFiled = [];
+
+    steps.forEach(step => {
+      let fields, name, type;
+      if (step.type === "datasource") {
+        const { datasource } = step;
+        fields = Object.values(datasource.labels);
+        name = datasource.name;
+        type = "datasource";
+        modules.push({ fields, name, type });
+      }
+
+      if (step.type === "form") {
+        const { form } = step;
+        name = form.name;
+        fields = form.fields.map(f => f.name);
+        type = "form";
+        modules.push({ fields, name, type });
+      }
+
+      if (step.type === "computed") {
+        const { computed } = step;
+        fields = computed.fields.map(f => f.name);
+        computedFiled = computedFiled.concat(fields);
+      }
+    });
+
+    modules.push({ type: "computed", fields: computedFiled });
+
+    return modules;
+  };
+
+  createQueryTypes = () => {
+    // The same with createQueryModules() function above
+    // we create parameter "types" manually
+
+    const { build } = this.props;
+    if (!build) return null;
+
+    const { steps } = build;
+
+    let types = {};
+    steps.forEach(step => {
+      if (step.type === "datasource") {
+        const { datasource } = step;
+        let type = {};
+        datasource.fields.forEach(f => {
+          type[datasource.labels[f]] = datasource.types[f];
+        });
+        types = { ...types, ...type };
+      } else {
+        const dataType = step.type;
+        const data = step[dataType];
+        data.fields.forEach(f => {
+          types[f.name] = f.type;
+        });
+      }
+    });
+
+    return types;
+  };
+
+  updateFilter = ({ filter, method, onSuccess, onError }) => {
+    const { selectedId } = this.props;
+
+    apiRequest(`/datalab/${selectedId}/filter/`, {
+      method,
+      payload: { filter },
+      onSuccess: datalab => {
+        notification["success"]({
+          message: `Filter successfully ${methodMap[method]}.`
+        });
+        onSuccess();
+        this.boundActionCreators.updateFilter(datalab);
+      },
+      onError: error => onError(error)
+    });
+  };
+
+  render() {
+    const { visualisation, edit, saved, searchTerm, querybuilder } = this.state;
+    const { filter, filteredData } = this.props;
 
     // Similarly, the table data is initialised on every render, so that
     // changes to values in form columns can be reflected
     const tableData = this.initialiseData();
-
-    const tableDataAmount = tableData.length;
 
     // Columns are initialised on every render, so that changes to the sort
     // in local state can be reflected in the table columns. Otherwise the
@@ -410,17 +512,51 @@ class Data extends React.Component {
     // for the first time
     const orderedColumns = this.initialiseColumns();
 
+    const queryModules = this.createQueryModules();
+    const queryTypes = this.createQueryTypes();
+
     return (
       <div className="data">
+        {queryModules && queryTypes && (
+          <QueryBuilder
+            {...querybuilder}
+            type={"filter"}
+            modules={queryModules}
+            types={queryTypes}
+            onClose={() => this.setState({ querybuilder: { visible: false } })}
+            onSubmit={this.updateFilter}
+          />
+        )}
+
+        <div className="datalab-view">
+          <Button
+            className="create-filter-button"
+            size="large"
+            icon="edit"
+            onClick={() => {
+              this.setState({
+                querybuilder: { visible: true, selected: filter }
+              });
+            }}
+          >
+            Filter
+          </Button>
+          {filter ? (
+            <span>
+              {filteredData.filteredLength} records selected out of{" "}
+              {filteredData.unfilteredLength} (
+              {filteredData.unfilteredLength - filteredData.filteredLength}{" "}
+              filtered out)
+            </span>
+          ) : (
+            <span> No filter is currently being applied </span>
+          )}
+        </div>
         <div className="filter">
-          <div>
-            {tableDataAmount} records selected out of {totalDataAmount} (
-            {totalDataAmount - tableDataAmount} filtered out)
-          </div>
           <Search
             className="searchbar"
             size="large"
-            placeholder="Search..."
+            placeholder="Quick Search..."
             value={searchTerm}
             onChange={e => this.setState({ searchTerm: e.target.value })}
           />
@@ -456,13 +592,8 @@ class Data extends React.Component {
 }
 
 const mapStateToProps = state => {
-  const { build, data, selectedId } = state.dataLab;
-
-  return {
-    build,
-    data,
-    selectedId
-  };
+  const { build, selectedId, filter, filteredData } = state.dataLab;
+  return { build, selectedId, filter, filteredData };
 };
 
 export default connect(mapStateToProps)(Data);

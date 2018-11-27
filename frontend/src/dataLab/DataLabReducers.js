@@ -30,7 +30,9 @@ function dataLab(state = {}, action) {
         build: action.build,
         data: action.data,
         datasources: action.datasources,
-        actions: action.actions
+        actions: action.actions,
+        filter: action.filter,
+        filteredData: action.filteredData
       });
 
       case OPEN_VISUALISATION_MODAL:
@@ -65,7 +67,7 @@ function dataLab(state = {}, action) {
       return Object.assign({}, state, {
         formFieldLoading: false
       });
-
+      
     default:
       return state;
   }

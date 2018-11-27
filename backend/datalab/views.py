@@ -8,7 +8,7 @@ import json
 
 from .serializers import DatalabSerializer
 from .permissions import DatalabPermissions
-from .models import Datalab
+from .models import Datalab, Filter
 from .utils import bind_column_types, combine_data, update_form_data, retrieve_form_data
 
 from container.views import ContainerViewSet
@@ -583,3 +583,22 @@ class DatalabViewSet(viewsets.ModelViewSet):
 
         return JsonResponse({"success": 1})
 
+
+    @detail_route(methods=["post", "put", "delete"])
+    def filter(self, request, id=None):
+        datalab = self.get_object()
+        self.check_object_permissions(request, datalab)
+
+        if request.method in ["PUT", "POST"]:
+            new_filter = Filter(**request.data.get("filter"))
+            datalab.filter = new_filter
+
+            
+
+        elif request.method == "DELETE":
+            datalab.filter = None
+
+        datalab.save()
+
+        serializer = DatalabSerializer(datalab)
+        return JsonResponse(serializer.data)

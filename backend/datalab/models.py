@@ -10,9 +10,13 @@ from mongoengine.fields import (
     EmbeddedDocumentField,
     DateTimeField,
     FloatField,
+    ObjectIdField,
+    BaseField
 )
 
 from container.models import Container
+from bson.objectid import ObjectId
+from workflow.utils import did_pass_test
 
 
 class Column(EmbeddedDocument):
@@ -62,6 +66,7 @@ class DatasourceModule(EmbeddedDocument):
     id = StringField(required=True)
     primary = StringField(required=True)
     matching = StringField(null=True)
+    name = StringField()
     fields = ListField(StringField())
     labels = DictField()
     types = DictField()
@@ -110,6 +115,29 @@ class Chart(EmbeddedDocument):
     selections = ListField(StringField())
     filterCols = ListField(StringField())
 
+
+
+
+# cannot import filter shcema from workflow.model
+# manually copy the code from workflow.model
+
+class Formula(EmbeddedDocument):
+    comparator = BaseField()
+    operator = StringField()
+    rangeFrom = BaseField()
+    rangeTo = BaseField()
+
+
+class Condition(EmbeddedDocument):
+    conditionId = ObjectIdField(default=ObjectId)
+    formulas = EmbeddedDocumentListField(Formula)
+
+
+class Filter(EmbeddedDocument):
+    parameters = ListField(StringField())
+    conditions = EmbeddedDocumentListField(Condition)
+
+
 class Datalab(Document):
     # Cascade delete if container is deleted
     container = ReferenceField(Container, required=True, reverse_delete_rule=2)
@@ -118,3 +146,46 @@ class Datalab(Document):
     data = ListField(DictField())
     order = EmbeddedDocumentListField(Column)
     charts = EmbeddedDocumentListField(Chart)
+    filter = EmbeddedDocumentField(Filter)
+
+    @property
+    def filteredData(self):
+        if self.filter:
+            filtered_data = []
+            types = {}
+
+            for step in self.steps:
+                if step.type == "datasource":
+                    for field in step.datasource.fields:
+                        label = step.datasource.labels[field]
+                        types[label] = step.datasource.types[field]
+                if step.type == "form":
+                    for field in step.form.fields:
+                        types[field.name] = field.type
+                if step.type == "computed":
+                    for field in step.computed.fields:
+                        types[field.name] = field.type
+            
+            parameters = self.filter.parameters
+            condition = self.filter.conditions[0]
+
+            for item in self.data:
+                if all(
+                    [
+                        did_pass_test(
+                            condition.formulas[parameter_index],
+                            item.get(parameter),
+                            types.get(parameter),
+                        )
+                        for parameter_index, parameter in enumerate(parameters)
+                    ]
+                ):
+                    filtered_data.append(item)
+        else:
+            filtered_data = self.data
+    
+        return {
+            "data": filtered_data,
+            "unfilteredLength": len(self.data),
+            "filteredLength": len(filtered_data),
+        }

@@ -23,6 +23,8 @@ def bind_column_types(steps):
                         datasource_id = step["id"]
                         datasource = Datasource.objects.get(id=datasource_id)
                     types[field] = datasource["types"][field]
+                    step["name"] = datasource["name"]
+            
 
         elif step["type"] == "computed":
             step = step["computed"]
